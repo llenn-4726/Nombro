@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Créer un compte{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-copy"><div class="eyebrow"><span class="eyebrow-line"></span> VOTRE ESPACE, VOS CHIFFRES</div><h1>La marge,<br>en toute <em>clarté.</em></h1><p>Créez votre espace pour suivre la rentabilité de vos produits simplement.</p><div class="mini-stat"><span class="stat-icon">✳</span><span><strong>Vos fiches vous appartiennent.</strong><br>Un espace privé par compte.</span></div><div class="orb orb-one"></div><div class="orb orb-two"></div></div>
+  <div class="auth-card"><div class="card-kicker">DÉMARRER</div><h2>Créer un compte</h2><p class="card-sub">Quelques secondes pour commencer.</p>
+    <form method="post" class="form-stack"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Nom complet<input type="text" name="name" placeholder="Ex. Camille Martin" maxlength="100" required autocomplete="name" value="{{ request.form.get('name','') }}"></label><label>Numéro de téléphone <small>Facultatif</small><input type="tel" name="phone" placeholder="06 12 34 56 78" maxlength="30" autocomplete="tel" value="{{ request.form.get('phone','') }}"></label><label>Adresse e-mail<input type="email" name="email" placeholder="vous@exemple.fr" required autocomplete="email" value="{{ request.form.get('email','') }}"></label><label>Mot de passe <small>8 caractères minimum</small><input type="password" name="password" placeholder="Choisissez un mot de passe" required minlength="8" autocomplete="new-password"></label><button class="button button-primary full" type="submit">Créer mon compte <span>→</span></button></form>
+    <div class="auth-switch">Déjà inscrit ? <a href="{{ url_for('login') }}">Se connecter</a></div>
+  </div>
+</section>
+{% endblock %}

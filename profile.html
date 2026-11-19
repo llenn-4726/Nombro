@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('dashboard') }}">Récapitulatif</a><span>/</span> Mon profil</div>
+<section class="auth-layout">
+  <div class="auth-copy"><div class="eyebrow"><span class="eyebrow-line"></span> VOTRE ESPACE MIMOSA</div><h1>Vos infos,<br>toujours à <em>jour.</em></h1><p>Modifiez le nom et le numéro de téléphone associés à votre compte.</p></div>
+  <div class="auth-card"><div class="card-kicker">VOTRE PROFIL</div><h2>Informations personnelles</h2><p class="card-sub">L’adresse e-mail ne peut pas être modifiée ici.</p>
+    <form method="post" class="form-stack"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>Nom complet<input type="text" name="name" placeholder="Ex. Camille Martin" maxlength="100" required autocomplete="name" value="{{ request.form.get('name', current_user.name) }}"></label><label>Numéro de téléphone <small>Facultatif</small><input type="tel" name="phone" placeholder="06 12 34 56 78" maxlength="30" autocomplete="tel" value="{{ request.form.get('phone', current_user.phone) }}"></label><label>Devise des prix<select name="currency">{% for code, symbol in [('EUR','€'),('USD','$'),('GBP','£'),('RUB','₽'),('JPY','¥'),('CHF','CHF'),('CAD','CA$')] %}<option value="{{ code }}" {% if request.form.get('currency', current_user.currency) == code %}selected{% endif %}>{{ code }} — {{ symbol }}</option>{% endfor %}</select><small>La devise change l’unité affichée, sans conversion des montants.</small></label><label>Adresse e-mail<input type="email" value="{{ current_user.email }}" disabled></label><button class="button button-primary full" type="submit">Enregistrer mon profil <span>→</span></button></form>
+  </div>
+</section>
+{% endblock %}

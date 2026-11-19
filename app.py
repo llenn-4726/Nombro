@@ -7,7 +7,6 @@ import sqlite3
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-
 from flask import Flask, Response, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -21,6 +20,7 @@ app.config.update(
     SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", "dev-key-a-remplacer-en-production"),
     DATABASE=str(INSTANCE_DIR / "plusvalue.sqlite3"),
 )
+CURRENCIES = {"EUR": "€", "USD": "$", "GBP": "£", "RUB": "₽", "JPY": "¥", "CHF": "CHF", "CAD": "CA$"}
 
 
 def get_db():
@@ -45,6 +45,7 @@ def init_db():
             email TEXT NOT NULL UNIQUE,
             name TEXT NOT NULL DEFAULT '',
             phone TEXT NOT NULL DEFAULT '',
+            currency TEXT NOT NULL DEFAULT 'EUR',
             password_hash TEXT NOT NULL,
             created_at TEXT NOT NULL
         );
@@ -52,6 +53,9 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             name TEXT NOT NULL,
+            product_code TEXT NOT NULL DEFAULT '',
+            barcode TEXT NOT NULL DEFAULT '',
+            supplier TEXT NOT NULL DEFAULT '',
             purchase_price REAL NOT NULL,
             sale_price REAL NOT NULL,
             purchase_ttc REAL,
@@ -69,12 +73,17 @@ def init_db():
         db.execute("ALTER TABLE users ADD COLUMN name TEXT NOT NULL DEFAULT ''")
     if "phone" not in columns:
         db.execute("ALTER TABLE users ADD COLUMN phone TEXT NOT NULL DEFAULT ''")
+    if "currency" not in columns:
+        db.execute("ALTER TABLE users ADD COLUMN currency TEXT NOT NULL DEFAULT 'EUR'")
     product_columns = {row["name"] for row in db.execute("PRAGMA table_info(products)")}
     for column, definition in (
         ("purchase_ttc", "REAL"),
         ("sale_ttc", "REAL"),
         ("vat_rate", "REAL NOT NULL DEFAULT 20"),
         ("extra_cost_ttc", "REAL NOT NULL DEFAULT 0"),
+        ("product_code", "TEXT NOT NULL DEFAULT ''"),
+        ("barcode", "TEXT NOT NULL DEFAULT ''"),
+        ("supplier", "TEXT NOT NULL DEFAULT ''"),
     ):
         if column not in product_columns:
             db.execute(f"ALTER TABLE products ADD COLUMN {column} {definition}")
@@ -92,7 +101,7 @@ with app.app_context():
 def prepare_request():
     g.user = None
     if session.get("user_id"):
-        g.user = get_db().execute("SELECT id, email, name, phone FROM users WHERE id = ?", (session["user_id"],)).fetchone()
+        g.user = get_db().execute("SELECT id, email, name, phone, currency FROM users WHERE id = ?", (session["user_id"],)).fetchone()
         if g.user is None:
             session.clear()
     if "csrf_token" not in session:
@@ -101,7 +110,10 @@ def prepare_request():
 
 @app.context_processor
 def inject_globals():
-    return {"csrf_token": session.get("csrf_token"), "current_user": g.get("user")}
+    user = g.get("user")
+    code = user["currency"] if user else "EUR"
+    return {"csrf_token": session.get("csrf_token"), "current_user": user,
+            "currency_symbol": CURRENCIES.get(code, "€"), "currency_code": code}
 
 
 @app.before_request
@@ -186,13 +198,16 @@ def profile():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         phone = request.form.get("phone", "").strip()
+        currency = request.form.get("currency", "EUR").strip().upper()
         if not name or len(name) > 100:
             flash("Saisissez votre nom (100 caractères maximum).", "error")
         elif len(phone) > 30 or (phone and not all(char.isdigit() or char in "+ ().-" for char in phone)):
             flash("Saisissez un numéro de téléphone valide.", "error")
+        elif currency not in CURRENCIES:
+            flash("Choisissez une devise proposée dans la liste.", "error")
         else:
             db = get_db()
-            db.execute("UPDATE users SET name = ?, phone = ? WHERE id = ?", (name, phone, g.user["id"]))
+            db.execute("UPDATE users SET name = ?, phone = ?, currency = ? WHERE id = ?", (name, phone, currency, g.user["id"]))
             db.commit()
             flash("Votre profil a été mis à jour.", "success")
             return redirect(url_for("dashboard"))
@@ -261,6 +276,9 @@ def update_product_cells(product_id):
     sale_ht = parse_price(str(values.get("sale_ht", "")))
     extra_ht = parse_price(str(values.get("extra_cost_ht", "0")))
     vat_rate = parse_rate(str(values.get("vat_rate", "")))
+    product_code = str(values.get("product_code", "")).strip()
+    barcode = str(values.get("barcode", "")).strip()
+    supplier = str(values.get("supplier", "")).strip()
     try:
         quantity_value = float(values.get("quantity", 0))
         quantity = int(quantity_value)
@@ -270,15 +288,29 @@ def update_product_cells(product_id):
         quantity = None
     if None in (purchase_ht, sale_ht, extra_ht, vat_rate, quantity):
         return jsonify(error="Valeurs invalides : montants positifs, TVA entre 0 et 100 %, quantité de 1 à 1 000 000."), 400
+    if len(product_code) > 80 or len(barcode) > 128 or len(supplier) > 160:
+        return jsonify(error="Code produit, code-barres ou fournisseur trop long."), 400
     factor = 1 + vat_rate / 100
     db = get_db()
-    db.execute("""UPDATE products SET purchase_price = ?, sale_price = ?, purchase_ttc = ?,
+    db.execute("""UPDATE products SET product_code = ?, barcode = ?, supplier = ?, purchase_price = ?, sale_price = ?, purchase_ttc = ?,
         sale_ttc = ?, vat_rate = ?, extra_cost_ttc = ?, quantity = ?
         WHERE id = ? AND user_id = ?""",
-        (purchase_ht, sale_ht, round(purchase_ht * factor, 2), round(sale_ht * factor, 2),
+        (product_code, barcode, supplier, purchase_ht, sale_ht, round(purchase_ht * factor, 2), round(sale_ht * factor, 2),
          vat_rate, round(extra_ht * factor, 2), quantity, product_id, g.user["id"]))
     db.commit()
     return jsonify(saved=True)
+
+
+@app.route("/api/preferences/devise", methods=["PATCH"])
+@login_required
+def update_currency():
+    values = request.get_json(silent=True) or {}
+    currency = str(values.get("currency", "")).upper()
+    if currency not in CURRENCIES:
+        return jsonify(error="Devise non prise en charge."), 400
+    get_db().execute("UPDATE users SET currency = ? WHERE id = ?", (currency, g.user["id"]))
+    get_db().commit()
+    return jsonify(saved=True, currency=currency, symbol=CURRENCIES[currency])
 
 
 @app.route("/produits/export.csv")
@@ -287,7 +319,7 @@ def export_products():
     products = get_db().execute("SELECT * FROM products WHERE user_id = ? ORDER BY name COLLATE NOCASE", (g.user["id"],)).fetchall()
     output = io.StringIO(newline="")
     writer = csv.writer(output, delimiter=";")
-    writer.writerow(["Produit", "Achat TTC", "Achat HT", "Vente TTC", "Vente HT", "TVA %", "Frais TTC", "Bénéfice HT / unité", "Bénéfice HT total", "Marge %", "Quantité", "Notes"])
+    writer.writerow(["Produit", "Code produit", "Code-barres", "Fournisseur", "Devise", "Achat TTC", "Achat HT", "Vente TTC", "Vente HT", "TVA %", "Frais TTC", "Bénéfice HT / unité", "Bénéfice HT total", "Marge %", "Quantité", "Notes"])
     for product in products:
         factor = 1 + product["vat_rate"] / 100
         purchase_ht = product["purchase_ttc"] / factor
@@ -295,7 +327,7 @@ def export_products():
         costs_ht = (product["purchase_ttc"] + product["extra_cost_ttc"]) / factor
         profit_unit = sale_ht - costs_ht
         margin = profit_unit / costs_ht * 100 if costs_ht else 0
-        writer.writerow([product["name"], product["purchase_ttc"], round(purchase_ht, 2), product["sale_ttc"], round(sale_ht, 2), product["vat_rate"], product["extra_cost_ttc"], round(profit_unit, 2), round(profit_unit * product["quantity"], 2), round(margin, 1), product["quantity"], product["notes"]])
+        writer.writerow([product["name"], product["product_code"], product["barcode"], product["supplier"], g.user["currency"], product["purchase_ttc"], round(purchase_ht, 2), product["sale_ttc"], round(sale_ht, 2), product["vat_rate"], product["extra_cost_ttc"], round(profit_unit, 2), round(profit_unit * product["quantity"], 2), round(margin, 1), product["quantity"], product["notes"]])
     return Response("\ufeff" + output.getvalue(), mimetype="text/csv; charset=utf-8", headers={"Content-Disposition": "attachment; filename=mimosa-produits.csv"})
 
 
@@ -304,6 +336,9 @@ def export_products():
 def new_product():
     if request.method == "POST":
         name = request.form.get("name", "").strip()
+        product_code = request.form.get("product_code", "").strip()
+        barcode = request.form.get("barcode", "").strip()
+        supplier = request.form.get("supplier", "").strip()
         purchase = parse_price(request.form.get("purchase_ttc"))
         sale = parse_price(request.form.get("sale_ttc"))
         vat_rate = parse_rate(request.form.get("vat_rate", "20"))
@@ -323,15 +358,17 @@ def new_product():
             flash("Le taux de TVA doit être compris entre 0 et 100 %.", "error")
         elif quantity is None:
             flash("La quantité doit être un entier supérieur à zéro.", "error")
+        elif len(product_code) > 80 or len(barcode) > 128 or len(supplier) > 160:
+            flash("Vérifie la longueur du code produit, du code-barres ou du fournisseur.", "error")
         else:
             db = get_db()
             purchase_ht = round(purchase / (1 + vat_rate / 100), 2)
             sale_ht = round(sale / (1 + vat_rate / 100), 2)
             extra_costs_ht = round(extra_costs / (1 + vat_rate / 100), 2)
             db.execute("""INSERT INTO products
-                (user_id, name, purchase_price, sale_price, purchase_ttc, sale_ttc, vat_rate, extra_cost_ttc, quantity, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (g.user["id"], name, purchase_ht, sale_ht, purchase, sale, vat_rate, extra_costs, quantity, notes, datetime.utcnow().isoformat()))
+                (user_id, name, product_code, barcode, supplier, purchase_price, sale_price, purchase_ttc, sale_ttc, vat_rate, extra_cost_ttc, quantity, notes, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (g.user["id"], name, product_code, barcode, supplier, purchase_ht, sale_ht, purchase, sale, vat_rate, extra_costs, quantity, notes, datetime.utcnow().isoformat()))
             db.commit()
             flash("La ligne a été ajoutée à la grille.", "success")
             return redirect(url_for("spreadsheet"))
@@ -347,6 +384,9 @@ def edit_product(product_id):
         abort(404)
     if request.method == "POST":
         name = request.form.get("name", "").strip()
+        product_code = request.form.get("product_code", "").strip()
+        barcode = request.form.get("barcode", "").strip()
+        supplier = request.form.get("supplier", "").strip()
         purchase = parse_price(request.form.get("purchase_ttc"))
         sale = parse_price(request.form.get("sale_ttc"))
         vat_rate = parse_rate(request.form.get("vat_rate", "20"))
@@ -366,12 +406,14 @@ def edit_product(product_id):
             flash("Le taux de TVA doit être compris entre 0 et 100 %.", "error")
         elif quantity is None:
             flash("La quantité doit être un entier supérieur à zéro.", "error")
+        elif len(product_code) > 80 or len(barcode) > 128 or len(supplier) > 160:
+            flash("Vérifie la longueur du code produit, du code-barres ou du fournisseur.", "error")
         else:
             factor = 1 + vat_rate / 100
-            db.execute("""UPDATE products SET name = ?, purchase_price = ?, sale_price = ?,
+            db.execute("""UPDATE products SET name = ?, product_code = ?, barcode = ?, supplier = ?, purchase_price = ?, sale_price = ?,
                 purchase_ttc = ?, sale_ttc = ?, vat_rate = ?, extra_cost_ttc = ?, quantity = ?, notes = ?
                 WHERE id = ? AND user_id = ?""",
-                (name, round(purchase / factor, 2), round(sale / factor, 2), purchase, sale, vat_rate, extra_costs, quantity, notes, product_id, g.user["id"]))
+                (name, product_code, barcode, supplier, round(purchase / factor, 2), round(sale / factor, 2), purchase, sale, vat_rate, extra_costs, quantity, notes, product_id, g.user["id"]))
             db.commit()
             flash("La ligne a été mise à jour.", "success")
             return redirect(url_for("spreadsheet"))
