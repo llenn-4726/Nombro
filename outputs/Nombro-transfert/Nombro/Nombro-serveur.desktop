@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Nombro serveur
+Comment=Démarrer Nombro pour le réseau local
+Exec=bash -lc 'cd "$HOME/Nombro" && ./lancer_nombro_serveur.sh'
+Icon=applications-internet
+Terminal=true
+Categories=Office;Finance;

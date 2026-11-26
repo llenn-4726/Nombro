@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ product.name }} · {{ tr('Fiche produit') }}{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('spreadsheet') }}">{{ tr('Retour à la grille') }}</a><span>/</span> {{ tr('Fiche produit') }}</div>
+<section class="product-detail-page">
+  <header class="product-detail-header">
+    <div class="product-detail-identity">
+      {% if product.photo_path %}<img class="product-detail-photo" src="{{ url_for('product_photo', product_id=product.id) }}" alt="{{ tr('Photo de') }} {{ product.name }}">{% else %}<div class="product-detail-placeholder">{{ product.name[0]|upper }}</div>{% endif %}
+      <div><div class="card-kicker">{{ tr('FICHE PRODUIT') }}</div><h1>{{ product.name }}</h1><p>{% if product.product_code %}{{ tr('Code produit') }} {{ product.product_code }}{% endif %}{% if product.supplier %}{% if product.product_code %} · {% endif %}{{ product.supplier }}{% endif %}</p></div>
+    </div>
+    <div class="product-detail-actions"><a class="button button-outline" href="{{ url_for('product_history', product_id=product.id) }}">↶ {{ tr('Historique') }}</a><a class="button button-primary" href="{{ url_for('edit_product', product_id=product.id) }}">✎ {{ tr('Modifier') }}</a></div>
+  </header>
+
+  <div class="product-detail-summary">
+    <article class="product-detail-price"><span>{{ tr('ACHAT TTC') }}</span><strong>{{ product.purchase_ttc|localized_number(2) }} {{ currency_symbol }}</strong><small>{{ purchase_ht|localized_number(2) }} {{ currency_symbol }} {{ tr('HT') }}</small></article>
+    <article class="product-detail-price"><span>{{ tr('VENTE TTC') }}</span><strong>{{ product.sale_ttc|localized_number(2) }} {{ currency_symbol }}</strong><small>{{ sale_ht|localized_number(2) }} {{ currency_symbol }} {{ tr('HT') }}</small></article>
+    <article class="product-detail-price highlighted"><span>{{ tr('MARGE VALEUR / UNITÉ') }}</span><strong>{{ margin_value|localized_number(2) }} {{ currency_symbol }}</strong><small>{{ margin_percent|localized_number(1) }} % · {{ tr('Marge totale') }} {{ margin_total|localized_number(2) }} {{ currency_symbol }}</small></article>
+    <article class="product-detail-price"><span>{{ tr('COEFF') }}</span><strong>{{ coefficient|localized_number(2) }}</strong><small>{{ tr('QTÉ') }} : {{ product.quantity }}</small></article>
+  </div>
+
+  <div class="product-detail-columns">
+    <section class="product-detail-panel"><h2>{{ tr('Informations du produit') }}</h2><dl class="product-detail-list">
+      <div><dt>{{ tr('Code produit') }}</dt><dd>{{ product.product_code or '—' }}</dd></div>
+      <div><dt>{{ tr('Code-barres') }}</dt><dd>{{ product.barcode or '—' }}</dd></div>
+      <div><dt>{{ tr('Fournisseur') }}</dt><dd>{{ product.supplier or '—' }}</dd></div>
+      <div><dt>{{ tr('TVA') }}</dt><dd>{{ product.vat_rate|localized_number(2) }} %</dd></div>
+      <div><dt>{{ tr('Frais annexes TTC') }}</dt><dd>{{ product.extra_cost_ttc|localized_number(2) }} {{ currency_symbol }} <small>({{ fees_ht|localized_number(2) }} {{ currency_symbol }} {{ tr('HT') }})</small></dd></div>
+      <div><dt>{{ tr('Prestation incluse') }}</dt><dd>{{ product.service_cost_ttc|localized_number(2) }} {{ currency_symbol }}</dd></div>
+    </dl></section>
+    <section class="product-detail-panel"><h2>{{ tr('Notes') }}</h2>{% if product.notes %}<p class="product-detail-notes">{{ product.notes }}</p>{% else %}<p class="product-detail-muted">{{ tr('Aucune note enregistrée.') }}</p>{% endif %}</section>
+  </div>
+
+  <section class="product-detail-panel product-detail-competition"><h2>{{ tr('Prix concurrents') }}</h2>
+    {% if product.competitors %}<div class="product-detail-competitors">{% for item in product.competitors %}<article><div><strong>{{ item.brand }}</strong>{% if item.notes %}<p>{{ item.notes }}</p>{% endif %}</div><strong>{{ item.price|localized_number(2) }} {{ currency_symbol }}</strong>{% if item.url %}<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ tr('Ouvrir le site') }} ↗</a>{% endif %}</article>{% endfor %}</div>
+    {% else %}<p class="product-detail-muted">{{ tr('Aucun concurrent ajouté pour le moment.') }}</p>{% endif %}
+  </section>
+</section>
+{% endblock %}

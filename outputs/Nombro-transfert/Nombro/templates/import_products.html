@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}{{ tr('Importer des produits') }}{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('spreadsheet') }}">{{ tr('Grille tableur') }}</a><span>/</span> {{ tr('Import CSV / Excel') }}</div>
+<section class="products-section import-section">
+  <div class="eyebrow"><span class="eyebrow-line"></span> {{ tr('IMPORT DE PRODUITS') }}</div>
+  <h1>{{ tr('Importer des produits') }}<em> CSV ou Excel.</em></h1>
+  <p class="import-intro">{{ tr('Importe un CSV Nombro ou un fichier Excel .xlsx. Les lignes sont vérifiées avant ajout au catalogue.') }}</p>
+  {% if rows is defined %}
+    <div class="import-summary"><strong>{% if current_language == 'en' %}{{ rows|length }} valid row{% if rows|length != 1 %}s{% endif %} ready to import.{% else %}{{ rows|length }} {{ tr('ligne') }}{% if rows|length != 1 %}s{% endif %} {{ tr('valide') }}{% if rows|length != 1 %}s{% endif %} {{ tr('prête') }}{% if rows|length != 1 %}s{% endif %} {{ tr('à importer.') }}{% endif %}</strong></div>
+    {% if errors %}<div class="import-errors"><strong>{{ errors|length }} {% if current_language == 'en' %}row(s) skipped{% else %}{{ tr('ligne') }}(s) ignorée(s){% endif %}</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+    <div class="import-preview"><table><thead><tr><th>{{ tr('Produit') }}</th><th>{{ tr('Code-barres') }}</th><th>{{ tr('Fournisseur') }}</th><th>{{ tr('Achat TTC') }}</th><th>{{ tr('Vente TTC') }}</th><th>{{ tr('Quantité') }}</th></tr></thead><tbody>{% for row in rows %}<tr><td>{{ row.name }}</td><td>{{ row.barcode or '—' }}</td><td>{{ row.supplier or '—' }}</td><td>{{ '%.2f'|format(row.purchase_ttc) }} {{ currency_symbol }}</td><td>{{ '%.2f'|format(row.sale_ttc) }} {{ currency_symbol }}</td><td>{{ row.quantity }}</td></tr>{% endfor %}</tbody></table></div>
+    <form method="post" class="import-actions"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="confirm"><a class="button button-quiet" href="{{ url_for('import_products') }}">{{ tr('Choisir un autre fichier') }}</a><button class="button button-primary" type="submit">{% if current_language == 'en' %}Import {{ rows|length }} row{% if rows|length != 1 %}s{% endif %}{% else %}Importer {{ rows|length }} {{ tr('ligne') }}{% if rows|length != 1 %}s{% endif %}{% endif %} <span>→</span></button></form>
+  {% else %}
+    <div class="import-card"><h2>{{ tr('Choisir le fichier') }}</h2><p>{{ tr('CSV : export Nombro. Excel : colonnes Produit et prix d’achat/vente TTC ou HT. TVA et quantité facultatives. Taille maximale : 5 Mo.') }}</p><form method="post" enctype="multipart/form-data" class="form-stack"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><div class="import-file-field"><label class="import-file-label" for="import-file">{{ tr('Fichier CSV ou Excel') }}</label><div class="import-file-picker"><input id="import-file" class="photo-file-input" type="file" name="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-describedby="import-file-name" required><label class="import-file-button" for="import-file"><span aria-hidden="true">↑</span>{{ tr('Choisir un fichier') }}</label><span id="import-file-name" class="import-file-name" aria-live="polite">{{ tr('Aucun fichier sélectionné') }}</span></div></div><div class="import-actions"><a class="button button-quiet" href="{{ url_for('spreadsheet') }}">{{ tr('Annuler') }}</a><button class="button button-primary" type="submit">{{ tr('Analyser le fichier') }} <span>→</span></button></div></form></div>
+  {% endif %}
+</section>
+{% endblock %}

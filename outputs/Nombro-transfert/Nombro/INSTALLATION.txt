@@ -1,0 +1,9 @@
+Démarrage rapide sur ce PC :
+- Installer Python 3 et python3-venv.
+- Dans ce dossier : python3 -m venv .venv
+- Puis : .venv/bin/python -m pip install -r requirements.txt
+- La sauvegarde nombro-backup.zip est à côté de nombro_backup.py.
+  Restaurer avec : .venv/bin/python nombro_backup.py restore nombro-backup.zip
+- Lancer : .venv/bin/python app.py puis ouvrir http://localhost:5000
+
+Le fichier Nombro.desktop suppose que ce dossier s’appelle ~/Nombro.

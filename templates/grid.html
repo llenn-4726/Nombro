@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}{{ tr("Ma grille de prix") }}{% endblock %}
+{% block content %}
+    {# En-tête de la grille et accès à l'ajout d'un produit. #}
+    <section class="dashboard-head">
+        <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span> {{ tr("NOMBRO · GRILLE DE CALCUL") }}</div>
+            <h1>{{ tr("Grille de ") }}<em>{{ tr("prix.") }}</em></h1>
+            <p>{{ tr("Modifie les prix HT ou TTC et la TVA : les marges se recalculent automatiquement.") }}</p>
+        </div>
+        <a
+            class="button button-primary"
+            href="{{ url_for('new_product') }}"
+        ><span class="plus">+</span> {{ tr("Ajouter une ligne") }}</a>
+    </section>
+    {# Résumé des quantités et des marges calculées. #}
+    <section class="summary-grid summary-grid-three">
+        <div class="summary-card"><span class="summary-label">{{ tr("LIGNES PRODUIT") }}</span><strong id="summary-count">{{ products|length }}</strong><span class="summary-foot">{{ tr("dans ta grille") }}</span><span class="summary-icon">▦</span></div>
+        <div class="summary-card summary-highlight"><span class="summary-label">{{ tr("MARGE TOTALE ESTIMÉE") }}</span><strong><span id="summary-margin-total">{{ total_margin|localized_number(2) }} {{ currency_symbol }}</span> <small>{{ tr("HT") }}</small></strong><span class="summary-foot">{{ tr("calculé sur les quantités indiquées") }}</span><span class="summary-icon">↗</span></div>
+        <div class="summary-card"><span class="summary-label">{{ tr("LIGNES RENTABLES") }}</span><strong><span id="summary-profitable">{{ profitable_count }}</span><small> / {{ products|length }}</small></strong><span class="summary-foot">{{ tr("marge moyenne ") }}<span id="summary-margin">{{ average_margin|localized_number(1) }}</span> %</span><span class="summary-icon">✳</span></div>
+    </section>
+    {# Outils de filtre et tableau modifiable des produits. #}
+    <section class="products-section spreadsheet-section">
+        <div class="sheet-heading">
+            <div>
+                <span class="card-kicker">{{ tr("GRILLE MODIFIABLE") }}</span>
+                <div class="sheet-title-line">
+                    <h2>{{ tr("Prix & rentabilité") }}</h2>
+                    <span>{{ tr("HT, TVA, frais, quantité et identifiants sont modifiables. Les cellules TTC et les marges se calculent automatiquement.") }}</span>
+                </div>
+            </div>
+            <div class="sheet-actions"><a class="button button-outline export-button" href="{{ url_for('import_products') }}">↑ {{ tr("Import CSV / Excel") }}</a><a class="button button-outline export-button" href="{{ url_for('export_products') }}">↓ {{ tr("Export CSV") }}</a><a class="button button-outline export-button" href="{{ url_for('export_products_xlsx') }}">↓ {{ tr("Exporter Excel") }}</a><a class="button button-outline export-button" href="{{ url_for('export_products_pdf') }}">↓ {{ tr("Exporter en PDF") }}</a></div>
+        </div>
+        {% if products %}<div class="sheet-toolbar"><label class="search-box"><span>⌕</span><input
+            id="product-search"
+            type="search"
+            placeholder="{{ tr('Rechercher une ligne…') }}"
+            aria-label="Rechercher une ligne"
+        ></label><label class="sort-box"><span>{{ tr("Trier") }}</span><select id="product-sort"><option value="recent">{{ tr("Ordre récent") }}</option><option value="name">{{ tr("Nom A → Z") }}</option><option value="profit-desc">{{ tr("Marge totale ↓") }}</option><option value="margin-desc">{{ tr("Taux de marge (%) ↓") }}</option></select></label><label class="sort-box"><span>{{ tr("État") }}</span><select id="product-filter"><option value="all">{{ tr("Tous") }}</option><option value="profit">{{ tr("Rentables") }}</option><option value="loss">{{ tr("À perte") }}</option><option value="even">{{ tr("À l’équilibre") }}</option></select></label><label class="sort-box"><span>{{ tr("Sous le seuil") }}</span><select id="target-filter"><option value="all">{{ tr("Tous") }}</option><option value="below">{{ tr("Sous le seuil") }}</option></select></label><label class="sort-box"><span>{{ tr("Fournisseur") }}</span><select id="supplier-filter"><option value="all">{{ tr("Tous") }}</option>{% for supplier in suppliers %}<option value="{{ supplier|lower }}">{{ supplier }}</option>{% endfor %}</select></label><label class="sort-box margin-range"><span>{{ tr("Marge min. %") }}</span><input id="margin-min-filter" type="number" step="0.1" placeholder="0"></label><label class="sort-box margin-range"><span>{{ tr("Marge max. %") }}</span><input id="margin-max-filter" type="number" step="0.1" placeholder="100"></label><label class="sort-box currency-box"><span>{{ tr("Devise") }}</span><select id="currency-select">{% for code, symbol in [('EUR','€'),('USD','$'),('GBP','£'),('RUB','₽'),('JPY','¥'),('CHF','CHF'),('CAD','CA$')] %}<option value="{{ code }}" {% if currency_code == code %}selected{% endif %}>{{ code }}</option>{% endfor %}</select></label><span id="result-count" class="result-count">{{ products|length }} {{ tr("ligne") }}{% if products|length != 1 %}s{% endif %}</span><span id="save-message" class="save-message" aria-live="polite">{{ tr("Modifications enregistrées automatiquement") }}</span></div>
+        <div class="sheet-scroll"><table class="spreadsheet"><thead><tr><th class="index-col">#</th><th class="name-col">{{ tr("PRODUIT") }}</th><th class="code-product-heading">{{ tr("CODE PRODUIT") }}</th><th>{{ tr("CODE-BARRES") }}</th><th>{{ tr("FOURNISSEUR") }}</th><th class="grid-description-heading">{{ tr("PRESTATION INCLUSE") }}</th><th class="grid-competition-heading">{{ tr("CONCURRENCE") }}</th><th>{{ tr("ACHAT HT") }}</th><th>{{ tr("ACHAT TTC") }}</th><th>{{ tr("VENTE HT") }}</th><th>{{ tr("VENTE TTC") }}</th><th>{{ tr("TVA") }}</th><th>{{ tr("FRAIS HT") }}</th><th>{{ tr("FRAIS TTC") }}</th><th>{{ tr("QTÉ") }}</th><th>{{ tr("MARGE VALEUR / UNITÉ") }}</th><th>{{ tr("MARGE VALEUR TOTALE") }}</th><th>{{ tr("MARGE %") }}</th><th>{{ tr("COEFF") }}</th><th>{{ tr("ÉTAT") }}</th><th></th></tr></thead><tbody id="product-rows">{% for p in products %}{% set factor = 1 + p.vat_rate / 100 %}{% set purchase_ht = p.purchase_ttc / factor %}{% set sale_ht = p.sale_ttc / factor %}{% set extra_ht = p.extra_cost_ttc / factor %}{% set margin_value = sale_ht - purchase_ht %}{% set margin_total = margin_value * p.quantity %}{% set margin = (margin_value / sale_ht * 100) if sale_ht else 0 %}{% set coefficient = (p.sale_ttc / purchase_ht) if purchase_ht else 0 %}<tr
+            id="ligne-{{ p.id }}"
+            class="sheet-row product-row"
+            data-id="{{ p.id }}"
+            data-name="{{ (p.name ~ ' ' ~ p.notes ~ ' ' ~ p.product_code ~ ' ' ~ p.manufacturer ~ ' ' ~ p.supplier_ref ~ ' ' ~ p.barcode ~ ' ' ~ p.supplier)|lower }}"
+            data-order="{{ loop.index0 }}"
+            data-margin-total="{{ margin_total }}"
+            data-margin="{{ margin }}"
+            data-target-percent="{{ min_margin_percent }}"
+            data-below-target="{% if margin < min_margin_percent %}yes{% else %}no{% endif %}"
+            data-status="{% if margin_value > 0 %}profit{% elif margin_value < 0 %}loss{% else %}even{% endif %}"
+            data-supplier="{{ p.supplier|lower }}"
+        ><td class="index-cell">{{ loop.index }}</td><td class="name-cell"><a class="grid-product-detail-link" href="{{ url_for('product_detail', product_id=p.id) }}">{% if p.photo_path %}<img
+            class="grid-product-thumbnail"
+            src="{{ url_for('product_photo', product_id=p.id) }}"
+            alt="{{ tr('Photo de') }} {{ p.name }}"
+        >{% endif %}<strong>{{ p.name }}</strong></a>{% if p.manufacturer or p.supplier_ref %}<small class="product-identifiers-meta">{% if p.manufacturer %}{{ p.manufacturer }}{% endif %}{% if p.manufacturer and p.supplier_ref %} · {% endif %}{% if p.supplier_ref %}{{ tr('Réf. fournisseur') }} : {{ p.supplier_ref }}{% endif %}</small>{% endif %}{% if p.notes %}<small title="{{ p.notes }}">{{ p.notes }}</small>{% endif %}</td><td class="code-product-cell"><input
+            class="cell-input meta-input code-product-input editable"
+            type="text"
+            maxlength="80"
+            value="{{ p.product_code }}"
+            data-fit-full-column
+            data-field="product_code"
+            aria-label="{{ p.name }} : code produit"
+        ></td><td><input
+            class="cell-input meta-input barcode-input editable"
+            type="text"
+            maxlength="128"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="Scanner…"
+            value="{{ p.barcode }}"
+            data-field="barcode"
+            aria-label="{{ p.name }} : code-barres"
+        ></td><td><input
+            class="cell-input meta-input editable"
+            type="text"
+            maxlength="160"
+            value="{{ p.supplier }}"
+            data-field="supplier"
+            list="supplier-options"
+            aria-label="{{ p.name }} : fournisseur"
+        ></td><td class="grid-description-cell"><span class="input-suffix"><input
+            class="cell-input service-input editable"
+            type="number"
+            min="0"
+            max="1000000000"
+            step="0.01"
+            value="{{ '%.2f'|format(p.service_cost_ttc) }}"
+            data-fit-full-column
+            data-field="service_cost_ttc"
+            aria-label="{{ p.name }} : {{ tr('Prestation incluse TTC') }}"
+        ><i>{{ currency_symbol }}</i></span></td><td class="grid-competition-cell">{% if p.competitors %}<div class="grid-competitor-list">{% for competitor in p.competitors %}<div title="{{ competitor.notes }}">{% if competitor.url %}<a
+            class="grid-competitor-brand"
+            href="{{ competitor.url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="{{ tr('Ouvrir le site de') }} {{ competitor.brand }}"
+        >{{ competitor.brand }}</a>{% else %}<span class="grid-competitor-brand">{{ competitor.brand }}</span>{% endif %}<strong>{{ competitor.price|localized_number(2) }} {{ currency_symbol }}</strong></div>{% endfor %}</div>{% else %}<span class="grid-empty-detail">{{ tr("Aucun concurrent") }}</span>{% endif %}</td><td><input
+            class="cell-input editable"
+            type="number"
+            min="0"
+            max="1000000000"
+            step="0.01"
+            value="{{ '%.2f'|format(purchase_ht) }}"
+            data-fit-full-column
+            data-field="purchase_ht"
+            aria-label="{{ p.name }} : prix d'achat HT"
+        ></td><td class="purchase-ttc-cell {% if margin_value < 0 %}loss-cell{% endif %}"><input
+            class="cell-input editable ttc-input"
+            type="number"
+            min="0"
+            max="1000000000"
+            step="0.01"
+            value="{{ '%.2f'|format(p.purchase_ttc) }}"
+            data-fit-full-column
+            data-field="purchase_ttc"
+            aria-label="{{ p.name }} : prix d’achat TTC"
+        ></td><td><input
+            class="cell-input editable"
+            type="number"
+            min="0"
+            max="1000000000"
+            step="0.01"
+            value="{{ '%.2f'|format(sale_ht) }}"
+            data-fit-full-column
+            data-field="sale_ht"
+            aria-label="{{ p.name }} : prix de vente HT"
+        ></td><td><input
+            class="cell-input editable ttc-input"
+            type="number"
+            min="0"
+            max="1000000000"
+            step="0.01"
+            value="{{ '%.2f'|format(p.sale_ttc) }}"
+            data-fit-full-column
+            data-field="sale_ttc"
+            aria-label="{{ p.name }} : prix de vente TTC"
+        ></td><td><span class="input-suffix"><input
+            class="cell-input editable narrow-input"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value="{{ '%.2f'|format(p.vat_rate) }}"
+            data-fit-full-column
+            data-field="vat_rate"
+            aria-label="{{ p.name }} : taux de TVA"
+        ><i>%</i></span></td><td><input
+            class="cell-input editable"
+            type="number"
+            min="0"
+            max="1000000000"
+            step="0.01"
+            value="{{ '%.2f'|format(extra_ht) }}"
+            data-fit-full-column
+            data-field="extra_cost_ht"
+            aria-label="{{ p.name }} : frais HT"
+        ></td><td class="formula-cell" data-output="extra_ttc">{{ p.extra_cost_ttc|localized_number(2) }} {{ currency_symbol }}</td><td><input
+            class="cell-input editable quantity-input"
+            type="number"
+            min="1"
+            max="1000000"
+            step="1"
+            value="{{ p.quantity }}"
+            data-fit-full-column
+            data-field="quantity"
+            aria-label="{{ p.name }} : quantité"
+        ></td><td class="calc-cell {% if margin_value < 0 %}loss-cell{% endif %}" data-output="margin_value">{{ margin_value|localized_number(2) }} {{ currency_symbol }}</td><td
+            class="calc-cell total-cell {% if margin_value < 0 %}loss-cell{% endif %}"
+            data-output="margin_total"
+        >{{ margin_total|localized_number(2) }} {{ currency_symbol }}</td><td class="calc-cell {% if margin_value < 0 %}loss-cell{% endif %}" data-output="margin">{{ margin|localized_number(1) }} %</td><td class="calc-cell" data-output="coefficient">{{ coefficient|localized_number(2) }}</td><td class="status-cell"><span
+            class="product-status {% if margin_value < 0 %}status-loss{% elif margin_value == 0 %}status-even{% else %}status-profit{% endif %}"
+            data-output="status"
+        >{% if margin_value < 0 %}{{ tr("À perte") }}{% elif margin_value == 0 %}{{ tr("Équilibre") }}{% else %}{{ tr("Rentable") }}{% endif %}</span></td><td class="row-actions"><div class="row-actions-inner"><a
+            class="edit-button"
+            href="{{ url_for('product_history', product_id=p.id) }}"
+            aria-label="{{ tr('Journal des modifications') }} : {{ p.name }}"
+            title="{{ tr('Journal des modifications') }}"
+        >↶</a><a
+            class="edit-button"
+            href="{{ url_for('edit_product', product_id=p.id) }}"
+            aria-label="Modifier {{ p.name }}"
+            title="Modifier le nom / les notes"
+        >✎</a><form
+            method="post"
+            action="{{ url_for('delete_product', product_id=p.id) }}"
+            onsubmit="return confirm('Supprimer cette ligne ?')"
+        ><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="delete-button" aria-label="Supprimer {{ p.name }}" title="Supprimer">×</button></form></div></td></tr>{% endfor %}</tbody></table></div><p id="no-results" class="no-results" hidden>{{ tr("Aucune ligne ne correspond au filtre.") }}</p>
+    {% else %}<div class="empty-state"><div class="empty-icon">▦</div><h3>{{ tr("Ta grille est vide pour le moment") }}</h3><p>{{ tr("Ajoute un produit : ses prix et calculs apparaîtront ici.") }}</p><a class="button button-outline" href="{{ url_for('new_product') }}">{{ tr("Ajouter la première ligne") }} <span>→</span></a></div>{% endif %}</section>
+{# Suggestions de fournisseurs pour les champs de la grille. #}
+<datalist id="supplier-options">
+    {% for supplier_name in suppliers %}<option value="{{ supplier_name }}">{% endfor %}
+</datalist><script src="{{ url_for('static', filename='app.js', v='20261126-productlookup1') }}" defer></script>
+{% endblock %}

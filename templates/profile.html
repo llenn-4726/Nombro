@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}{{ tr('Paramètres') }}{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('dashboard') }}">{{ tr('Récapitulatif') }}</a><span>/</span> {{ tr('Paramètres') }}</div>
+<section class="settings-page">
+  <header class="settings-heading">
+    <div class="eyebrow"><span class="eyebrow-line"></span> {{ tr('VOTRE ESPACE NOMBRO') }}</div>
+    <h1>{{ tr('Paramètres') }}</h1>
+    <p>{{ tr('Profil, apparence, sécurité et sauvegarde de tes données.') }}</p>
+  </header>
+  <div class="settings-grid">
+    <section class="settings-panel">
+      <div class="card-kicker">{{ tr('VOTRE PROFIL') }}</div>
+      <h2>{{ tr('Informations personnelles') }}</h2>
+      <p class="card-sub">{{ tr('L’adresse e-mail ne peut pas être modifiée ici.') }}</p>
+      <form method="post" class="form-stack settings-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>{{ tr('Nom complet') }}<input type="text" name="name" placeholder="Ex. Camille Martin" maxlength="100" required autocomplete="name" value="{{ request.form.get('name', current_user.name) }}"></label>
+        <label>{{ tr('Numéro de téléphone') }} <small>{{ tr('Facultatif') }}</small><input type="tel" name="phone" placeholder="06 12 34 56 78" maxlength="30" autocomplete="tel" value="{{ request.form.get('phone', current_user.phone) }}"></label>
+        <label>{{ tr('Devise des prix') }}<select name="currency">{% for code, symbol in [('EUR','€'),('USD','$'),('GBP','£'),('RUB','₽'),('JPY','¥'),('CHF','CHF'),('CAD','CA$')] %}<option value="{{ code }}" {% if request.form.get('currency', current_user.currency) == code %}selected{% endif %}>{{ code }} — {{ symbol }}</option>{% endfor %}</select><small>{{ tr('Unité d’affichage, sans conversion.') }}</small></label>
+        <label>{{ tr('Marge minimum souhaitée (%)') }}<input type="number" name="min_margin_percent" min="0" max="100" step="0.1" value="{{ request.form.get('min_margin_percent', current_user.min_margin_percent) }}"><small>{{ tr('Utilisée par le filtre « Sous le seuil » de la grille.') }}</small></label>
+        <label>{{ tr('Apparence') }}<select id="theme-select" name="theme">{% for value, label in [('light','Clair'),('green-dark','Green Dark'),('black-dark','Dark noir et blanc'),('colorful','Coloré'),('cyberpunk','Cyberpunk')] %}<option value="{{ value }}" {% if request.form.get('theme', current_user.theme) == value %}selected{% endif %}>{{ tr(label) }}</option>{% endfor %}</select><small>{{ tr('Application immédiate.') }} <span id="theme-save-status" class="preference-status" aria-live="polite"></span></small></label>
+        <label>{{ tr('Langue') }}<select id="language-select" name="language">{% for code, label in language_names.items() %}<option value="{{ code }}" {% if current_language == code %}selected{% endif %}>{{ tr(label) }}</option>{% endfor %}</select><small>{{ tr('Langue de l’interface.') }} <span id="language-save-status" class="preference-status" aria-live="polite"></span></small></label>
+        <label>{{ tr('Adresse e-mail') }}<input type="email" value="{{ current_user.email }}" disabled></label>
+        <button class="button button-primary full" type="submit">{{ tr('Enregistrer mon profil') }} <span>→</span></button>
+      </form>
+    </section>
+
+    <section class="settings-panel">
+      <div class="card-kicker">{{ tr('SÉCURITÉ') }}</div>
+      <h2>{{ tr('Changer le mot de passe') }}</h2>
+      <p class="card-sub">{{ tr('Choisis un nouveau mot de passe d’au moins 8 caractères.') }}</p>
+      <form method="post" action="{{ url_for('change_password') }}" class="form-stack settings-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>{{ tr('Mot de passe actuel') }}<input type="password" name="current_password" required autocomplete="current-password"></label>
+        <label>{{ tr('Nouveau mot de passe') }}<input type="password" name="new_password" minlength="8" maxlength="256" required autocomplete="new-password"></label>
+        <label>{{ tr('Confirmer le nouveau mot de passe') }}<input type="password" name="confirm_password" minlength="8" maxlength="256" required autocomplete="new-password"></label>
+        <button class="button button-primary full" type="submit">{{ tr('Changer le mot de passe') }} <span>→</span></button>
+      </form>
+    </section>
+
+    <section class="settings-panel settings-backup">
+      <div class="card-kicker">{{ tr('VOS DONNÉES') }}</div>
+      <h2>{{ tr('Sauvegarde') }}</h2>
+      <p class="card-sub">{{ tr('Télécharge tes produits, prix, références, quantités et notes. Garde le fichier dans un endroit sûr.') }}</p>
+      <a class="button button-outline full" href="{{ url_for('download_backup') }}">↓ {{ tr('Télécharger la sauvegarde') }}</a>
+      <div class="backup-restore">
+        <h3>{{ tr('Restaurer une sauvegarde') }}</h3>
+        <form method="post" action="{{ url_for('restore_backup') }}" enctype="multipart/form-data" class="form-stack" id="restore-backup-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label>{{ tr('Fichier de sauvegarde JSON') }}</label>
+          <div class="backup-file-control">
+            <span class="backup-file-name" id="backup-file-name">{{ tr('Aucun fichier sélectionné.') }}</span>
+            <label class="backup-file-button">{{ tr('Parcourir') }}<input id="backup-file-input" type="file" name="backup_file" accept=".json,application/json" required></label>
+          </div>
+          <label>{{ tr('Mode de restauration') }}<select name="restore_mode" id="restore-mode"><option value="merge">{{ tr('Fusionner avec le catalogue') }}</option><option value="replace">{{ tr('Remplacer le catalogue actuel') }}</option></select></label>
+          <label id="replace-confirm-row" class="replace-confirm" hidden><input type="checkbox" name="confirm_replace" value="yes">{{ tr('Je confirme le remplacement de tous mes produits actuels.') }}</label>
+          <button class="button button-outline full" type="submit">{{ tr('Restaurer la sauvegarde') }}</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='app.js', v='20261126-productlookup1') }}" defer></script>{% endblock %}

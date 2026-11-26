@@ -1,0 +1,38 @@
+NOMBRO — SERVEUR SUR LE RÉSEAU LOCAL (LINUX)
+
+Le PC hôte conserve la base, les comptes, les photos et la clé dans le dossier
+Nombro/instance. Les autres PC ouvrent Nombro dans leur navigateur via l’adresse
+IP locale affichée au démarrage. Tous doivent être sur le même réseau local.
+
+Installation automatique sur le PC hôte :
+1. Décompresse ce paquet de façon à obtenir le dossier ~/Nombro.
+2. Arrête tout ancien serveur Nombro (Ctrl+C).
+3. Dans un terminal : cd ~/Nombro && ./installer_serveur.sh
+Le script installe Python et ses dépendances, restaure le catalogue seulement
+si aucune base n’existe, active le serveur et le minuteur de sauvegarde, puis
+affiche les adresses à utiliser. Il demande le mot de passe administrateur
+pour activer le démarrage dès l’allumage, avant même la connexion. La base
+existante n’est jamais remplacée.
+
+Sur un autre PC du même réseau, ouvre dans un navigateur :
+http://ADRESSE-IP-AFFICHEE:5000
+
+Les données restent stockées sur le PC hôte dans Nombro/instance. Le serveur
+n’est accessible que depuis le réseau auquel ce PC est connecté, pas depuis
+Internet. Pour des raisons de sécurité, utilise-le sur un réseau de confiance
+et conserve un mot de passe fort pour les comptes.
+
+Le fichier Nombro-serveur.desktop peut être copié sur le Bureau du PC hôte
+(après installation dans ~/Nombro) pour démarrer le serveur en double-cliquant.
+
+
+SAUVEGARDE AUTOMATIQUE QUOTIDIENNE
+
+Sur le PC hôte, depuis le dossier Nombro, installe la tâche planifiée :
+   bash scripts/install-backup-timer.sh
+À la question du dossier, appuie sur Entrée pour utiliser
+Nombro/instance/backups. La sauvegarde se lance chaque jour à 13 h (heure
+locale), conserve 30 jours d’archives dans une arborescence année/mois, par exemple
+instance/backups/nombro-backup-2026/11/23-101417.zip. La tâche se rattrape au
+prochain démarrage si l’ordinateur était éteint à l’heure prévue.
+Vérifier : systemctl --user list-timers nombro-backup.timer

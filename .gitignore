@@ -1,0 +1,9 @@
+instance/secrets.env
+instance/secret_key
+instance/*.sqlite3
+instance/imports/
+instance/backups/
+instance/recovery/
+backup.env
+__pycache__/
+*.py[cod]

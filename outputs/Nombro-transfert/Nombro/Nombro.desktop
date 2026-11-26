@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Nombro
+Comment=Suivi des prix et des marges
+Exec=bash -lc 'cd "$HOME/Nombro" && ./lancer_nombro.sh'
+Icon=applications-office
+Terminal=true
+Categories=Office;Finance;

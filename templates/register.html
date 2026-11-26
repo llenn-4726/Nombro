@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}{{ tr('Créer un compte') }}{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-copy"><div class="eyebrow"><span class="eyebrow-line"></span> {{ tr('VOTRE ESPACE, VOS CHIFFRES') }}</div><h1>{{ tr('La marge,') }}<br>{{ tr('en toute ') }}<em>{{ tr('clarté.') }}</em></h1><p>{{ tr('Créez votre espace pour suivre la rentabilité de vos produits simplement.') }}</p><div class="mini-stat"><span class="stat-icon">✳</span><span><strong>{{ tr('Vos fiches vous appartiennent.') }}</strong><br>{{ tr('Un espace privé par compte.') }}</span></div><div class="orb orb-one"></div><div class="orb orb-two"></div></div>
+  <div class="auth-card"><div class="card-kicker">{{ tr('DÉMARRER') }}</div><h2>{{ tr('Créer un compte') }}</h2><p class="card-sub">{{ tr('Quelques secondes pour commencer.') }}</p>
+    <form method="post" class="form-stack"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>{{ tr('Nom complet') }}<input type="text" name="name" placeholder="Ex. Camille Martin" maxlength="100" required autocomplete="name" value="{{ request.form.get('name','') }}"></label><label>{{ tr('Numéro de téléphone') }} <small>{{ tr('Facultatif') }}</small><input type="tel" name="phone" placeholder="06 12 34 56 78" maxlength="30" autocomplete="tel" value="{{ request.form.get('phone','') }}"></label><label>{{ tr('Adresse e-mail') }}<input type="email" name="email" placeholder="vous@exemple.fr" required autocomplete="email" value="{{ request.form.get('email','') }}"></label><label>{{ tr('Mot de passe') }} <small>{{ tr('8 caractères minimum') }}</small><input type="password" name="password" placeholder="Choisissez un mot de passe" required minlength="8" maxlength="256" autocomplete="new-password"></label><button class="button button-primary full" type="submit">{{ tr('Créer mon compte') }} <span>→</span></button></form>
+    <div class="auth-switch">{{ tr('Déjà inscrit ?') }} <a href="{{ url_for('login') }}">{{ tr('Se connecter') }}</a></div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+NOMBRO — FABRICANT, RÉFÉRENCE FOURNISSEUR ET RECHERCHE DE FICHES
+
+Installation sur le PC serveur Ubuntu
+1. Copiez l’archive Nombro-references-produit.zip dans Téléchargements.
+2. Ouvrez un terminal et lancez :
+
+cd "$HOME/Téléchargements/Nombro-serveur-local/Nombro"
+unzip -o "$HOME/Téléchargements/Nombro-references-produit.zip" -d "$PWD"
+systemctl --user restart nombro-server.service
+systemctl --user status nombro-server.service --no-pager
+
+La mise à jour conserve la base de données. Au démarrage, Nombro ajoute automatiquement les colonnes Fabricant et Réf. fournisseur à la base existante. Ne supprimez pas instance/plusvalue.sqlite3.
+
+Nouveautés
+- Les fiches produit possèdent les champs Fabricant et Réf. fournisseur (Ref Fou).
+- Ces informations apparaissent dans la grille, la fiche détaillée, les sauvegardes et les exports CSV, Excel et PDF.
+- Dans « Ajouter une ligne », le champ de recherche retrouve une fiche déjà enregistrée par nom, fabricant, référence ou fournisseur. Sélectionner cette fiche recopie ses prix et ses concurrents enregistrés dans la nouvelle ligne.
+
+Limite de la recherche
+Cette recherche consulte le catalogue Nombro de votre compte. Elle ne consulte pas les sites Jarltech, Inmac Wstore ou TD SYNNEX et ne met pas les prix à jour en direct. Aucun accès API ou flux catalogue n’est configuré. Les prix copiés sont ceux de la fiche sauvegardée : vérifiez-les avant d’enregistrer.
+
+Pour une recherche de prix manuelle, envoyez à l’assistant le nom exact du produit, sa marque/référence fournisseur et le ou les fournisseurs à comparer. Les résultats pourront ensuite être saisis dans Nombro.

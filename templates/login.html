@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}{{ tr('Connexion') }}{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-copy"><div class="eyebrow"><span class="eyebrow-line"></span> {{ tr('PILOTEZ VOTRE RENTABILITÉ') }}</div><h1>{{ tr('Chaque produit') }}<br>{{ tr('raconte une ') }}<em>{{ tr('marge.') }}</em></h1><p>{{ tr('Retrouvez vos coûts, vos prix de vente et votre bénéfice en un seul endroit.') }}</p><div class="mini-stat"><span class="stat-icon">↗</span><span><strong>{{ tr('Une vision simple.') }}</strong><br>{{ tr('Des décisions plus justes.') }}</span></div><div class="orb orb-one"></div><div class="orb orb-two"></div></div>
+  <div class="auth-card"><div class="card-kicker">{{ tr('BON RETOUR') }}</div><h2>{{ tr('Connexion') }}</h2><p class="card-sub">{{ tr('Connectez-vous pour retrouver vos fiches produit.') }} {{ tr('Votre session restera active jusqu’à 30 jours sur cet appareil.') }}</p>
+    <form method="post" class="form-stack"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label>{{ tr('Adresse e-mail') }}<input type="email" name="email" placeholder="vous@exemple.fr" required autocomplete="email" value="{{ request.form.get('email','') }}"></label><label>{{ tr('Mot de passe') }}<input type="password" name="password" placeholder="Votre mot de passe" required autocomplete="current-password"></label><button class="button button-primary full" type="submit">{{ tr('Se connecter') }} <span>→</span></button></form>
+    <div class="auth-switch">{{ tr('Pas encore de compte ?') }} <a href="{{ url_for('register') }}">{{ tr('Créer un compte') }}</a></div>
+  </div>
+</section>
+{% endblock %}

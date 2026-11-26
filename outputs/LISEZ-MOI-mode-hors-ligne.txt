@@ -1,0 +1,15 @@
+MISE À JOUR NOMBRO — MODE HORS LIGNE TEMPORAIRE
+
+Cette mise à jour permet de garder les modifications de la grille dans le navigateur quand le serveur devient momentanément inaccessible. Les changements sont renvoyés automatiquement quand Nombro redevient joignable.
+
+Installation sur le PC serveur Ubuntu :
+1. Copiez Nombro-mode-hors-ligne.zip dans Téléchargements.
+2. Ouvrez un terminal et exécutez :
+
+unzip -o "/home/stagiaire/Téléchargements/Nombro-mode-hors-ligne.zip" -d "/home/stagiaire/Téléchargements/Nombro-serveur-local/Nombro"
+systemctl --user restart nombro-server.service
+systemctl --user status nombro-server.service --no-pager
+
+3. Sur le PC client, rechargez Nombro avec Ctrl+F5.
+
+Limite actuelle : le mode hors ligne fonctionne tant que la page Nombro est déjà ouverte. Si la page est fermée ou rechargée pendant la coupure, elle ne peut pas être rouverte sans réseau. Il faudra une configuration HTTPS pour permettre l’ouverture de l’application hors ligne.

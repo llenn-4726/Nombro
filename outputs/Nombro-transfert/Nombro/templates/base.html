@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="{{ current_language }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="currency-code" content="{{ currency_code }}">
+  <meta name="language" content="{{ current_language }}">
+  <title>{% block title %}{{ tr('Accueil') }}{% endblock %} · Nombro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20261123-3') }}">
+</head>
+<body class="theme-{{ theme_name }}{% if request.endpoint == 'spreadsheet' %} spreadsheet-page{% endif %}{% if request.endpoint == 'profile' %} settings-route{% endif %}">
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">✿</span><span>Nombro<span class="brand-dot">.</span></span></a>
+    {% if current_user %}
+    <nav class="nav"><a class="{% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">{{ tr('Récapitulatif') }}</a><a class="{% if request.endpoint == 'spreadsheet' %}active{% endif %}" href="{{ url_for('spreadsheet') }}">{{ tr('Grille tableur') }}</a><a class="profile-link settings-link" href="{{ url_for('profile') }}" title="{{ tr('Paramètres') }}" aria-label="{{ tr('Paramètres') }}"><img src="{{ url_for('static', filename='settings-icon.png') }}" alt="" aria-hidden="true"></a><span class="user-email">{{ current_user.name or current_user.email }}</span><form class="logout-form" action="{{ url_for('logout') }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="nav-logout" type="submit"><span class="logout-icon" aria-hidden="true">↪</span>{{ tr('Déconnexion') }}</button></form></nav>
+    {% else %}<a class="nav-login" href="{{ url_for('login') }}">{{ tr('Connexion') }} <span>↗</span></a>{% endif %}
+  </header>
+  <main class="page">
+    {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+  <footer>{{ tr('Un regard clair sur la rentabilité de vos produits') }} <span>·</span> <span>Nombro © 2026</span></footer>
+</body>
+</html>
