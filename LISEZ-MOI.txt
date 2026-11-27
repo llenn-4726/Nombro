@@ -1,0 +1,19 @@
+NOMBRO SERVEUR SIMPLE - INSTALLATION PROPRE
+
+Cette version démarre dans un dossier neuf avec une base de données vide. Elle ne reprend pas les anciennes données.
+
+Sur le PC serveur :
+1. Télécharge le ZIP et décompresse-le dans Téléchargements. Tu obtiendras le dossier Nombro-serveur-simple.
+2. Dans un terminal, lance ces deux commandes :
+   cd "/home/stagiaire/Téléchargements/Nombro-serveur-simple"
+   bash installer_serveur.sh
+
+L’installateur crée l’environnement Python, installe les dépendances, prépare une base neuve, installe et démarre le service, configure les sauvegardes quotidiennes à 13 h et affiche l’adresse réseau à ouvrir dans Firefox.
+
+La base commence sans compte. Crée ton compte dans Nombro depuis le navigateur. Le catalogue de 18 produits et les photos sont présents dans ce dossier; pour les ajouter au compte, exécute :
+  .venv/bin/python import_catalogue.py --list-users
+  .venv/bin/python import_catalogue.py --email 'adresse-du-compte'
+
+Pour contrôler ou relancer le service :
+  systemctl --user status nombro-server.service --no-pager -l
+  systemctl --user restart nombro-server.service

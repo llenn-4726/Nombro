@@ -1,0 +1,20 @@
+Sources des images embarquées
+
+01 Zebra TC27 — Gentag : https://www.gentag.fr/terminaux-portables/petits-terminaux/zebra-tc27-ordinateur-mobile-tc27
+02 Zebra TC22 — Gentag : https://www.gentag.fr/terminaux-portables/petits-terminaux/zebra-tc22-ordinateur-mobile-tc22
+03 Coque — The Barcode Warehouse : https://www.thebarcodewarehouse.co.uk/shop/zebra/accessories/cases/zebra-sg-tc2l-boot-01/
+04 Sunmi L3 — La Casa del TPV : https://www.lacasadeltpv.com/products/pda-android-sunmi-l3-gms-nfc-rfid-escaner-2d-se4710-octa-core-6gb-ram-128gb-6-8-p09070005
+05 Zebra ZD411 — EO Johnson, gamme ZD400 : https://www.eojohnson.com/hs-fs/hubfs/2025/Label%20Printers%2C%20Barcode%20Scanners%2C%20Mobile%20Computing/Zebra%20ZD400%20Series.png
+06 Epson TM-T20IV — Epson : https://www.epson.nl/nl_NL/producten/printers/pos-printers/pos-printers/epson-tm-t20iv%2C-thermal-pos-receipt-printer%2C-usb%2Bserial%2Bethernet/p/54322
+07 Socle TC22/TC27 — FirstShop, socle compatible (format 1 emplacement illustré) : https://www.firstshop.co.za/products/zebra-tc22-tc27-single-slot-charge-only-cradle-crd-tc2l-bs1co-01-318848
+08 iiyama T2254MSC-B2AG — Visunext : https://www.visunext.it/p/iiyama-t2254msc-b2ag-monitor-1000035926/
+09 Aures OLC 10.1 — ProCaisse : https://procaisse.com/afficheurs-clients/1563-ecran-olc-101-aures-5712505795040.html
+10 Epson TM-H6000VI — Gentag : https://www.gentag.fr/imprimantes/imprimantes-tickets/epson-tm-h6000vi-imprimante-ticket-et-cheque
+11 Datalogic QBT2131 — Alternate : https://www.alternate.lu/Datalogic/QuickScan-QBT2131-Barcode-Scanner/html/product/100174110
+12 Datalogic QD2220 — IT Splendid : https://www.itsplendid.com/products/datalogic-qd2220-bkk1s-barcode-scanner-1d-linear-codes-decoding-capability-cable-usb-2m-straight-stand-protection-class-ip42-rated-protection-usb-cable-black-qd2220-bkk1s
+13 Datalogic QD2590 — Australia Barcode System : https://australiabarcodesystem.com/products/datalogic-qd2590-barcode-scanner
+14 Datalogic QM2500 — Gentag : https://www.gentag.fr/lecteurs-code-barres/scanners-bluetooth/datalogic-quickscan-qm2500-scanner-sans-fil-codes-barres-2d
+15 Bixolon BCD-2000 — Nabava : https://www.nabava.net/pos-monitori/display-za-kupca-bixolon-bcd-2000-cijena-black-usb-448895651
+16 Datalogic Magellan 3450VSi — Gentag : https://www.gentag.fr/lecteurs-code-barres/scanners-fixes/datalogic-magellan-3450vsi-scanner-de-caisse
+17 Datalogic Magellan 3550HSi — Gentag : https://www.gentag.fr/lecteurs-code-barres/scanners-fixes/datalogic-magellan-3550hsi-scanner-de-caisse
+18 Zebra ZD230 — Jarltech : https://www.jarltech.com/en/zebra-zd230-0

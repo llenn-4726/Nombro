@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ tr('Journal des modifications') }} · {{ product.name }}{% endblock %}
+{% block content %}
+<div class="breadcrumb"><a href="{{ url_for('spreadsheet') }}">{{ tr('Retour à la grille') }}</a><span>/</span> {{ tr('Journal des modifications') }}</div>
+<section class="products-section history-section">
+  <div class="sheet-heading">
+    <div><span class="card-kicker">{{ tr('SUIVI DES MODIFICATIONS') }}</span><h1>{{ tr('Journal des modifications') }}</h1><p>{{ product.name }}</p></div>
+    <a class="button button-outline" href="{{ url_for('spreadsheet') }}">← {{ tr('Retour à la grille') }}</a>
+  </div>
+  {% if history %}
+  <div class="sheet-scroll"><table class="history-table"><thead><tr><th>{{ tr('Date') }}</th><th>{{ tr('Modifié par') }}</th><th>{{ tr('Champ') }}</th><th>{{ tr('Avant') }}</th><th>{{ tr('Après') }}</th></tr></thead><tbody>
+  {% for item in history %}<tr><td>{{ item.changed_at|replace('T', ' ')|truncate(19, True, '') }}</td><td>{{ item.actor }}</td><td>{{ tr(item.field) }}</td><td>{{ item.old }}</td><td>{{ item.new }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty-state"><h3>{{ tr('Aucune modification enregistrée.') }}</h3><p>{{ tr('Les prochains changements apparaîtront ici.') }}</p></div>{% endif %}
+</section>
+{% endblock %}
